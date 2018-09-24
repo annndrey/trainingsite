@@ -1,0 +1,35 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+{% if authuser and authuser.is_author %}
+  <div class="row">
+  <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('new', what='article')}}" role="button">Новая статья</a>
+  </div>
+  <br>
+{% endif %}
+
+{% for a in articles %}
+  <div class="row">
+    <div class="thumbnail">
+      <img src="{{a.headerimage}}"  alt="">
+      <div class="caption">
+        <h3><a href="{{request.route_url('article', id=a.id)}}">{{a.header}}</a> <small>{{a.lastchanged.strftime('%d.%m.%Y')}}, {{a.author}}</small></h3>
+        
+        {% if authuser and authuser.is_author %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what='article', id=a.id)}}" role="button">Изменить</a>
+          {% if authuser.is_admin %}
+            {% if a.is_archived %}
+              <a class="btn btn-sm disabled" style="text-decoration:none;" href="{{request.route_url('delete', what='article', id=a.id)}}" role="button">В архиве</a>
+            {% else %}
+              <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what='article', id=a.id)}}" role="button">Удалить</a>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        <p>{{a.preview|safe}} <a href="{{request.route_url('article', id=a.id)}}">Дальше ></a></p>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock content %}

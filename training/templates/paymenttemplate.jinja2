@@ -1,0 +1,24 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="row">
+  <h2>{{ descr }}</h2>
+  <h3>{{price}} &#8381;</h3>
+
+  <form role="form" method="post" action="{{walleturl}}">
+    <input type="hidden" name="WMI_MERCHANT_ID" value="{{merchid}}"/>
+    <input type="hidden" name="WMI_PAYMENT_AMOUNT" value="{{price}}.00"/>
+    <input type="hidden" name="WMI_CURRENCY_ID"    value="643"/>
+    <input type="hidden" name="WMI_DESCRIPTION"    value="{{descr}}"/>
+    <input type="hidden" name="WMI_SUCCESS_URL"    value="{{request.route_url('dashboard')}}"/>
+    <input type="hidden" name="WMI_FAIL_URL"       value="{{request.route_url('showone', what='course', id=courseid)}}"/>
+    <input type="hidden" name="uid"    value="{{userid}}"/>
+    <input type="hidden" name="sid"    value="{{sid}}"/>
+    <input type="hidden" name="pid"    value="{{pid}}"/>
+    <input type="hidden" name="cid"    value="{{courseid}}"/>
+    <button type="submit" class="btn btn-default" value="Оплатить"/>Оплатить</button>
+    <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('delete', what='payment', id=pid)}}" role="button">Отмена</a>
+  </form>
+</div>
+
+{% endblock content %}

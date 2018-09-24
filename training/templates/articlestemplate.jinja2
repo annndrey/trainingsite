@@ -1,0 +1,56 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+{% if authuser is defined and authuser.is_author %}
+  <div class="row">
+  <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('new', what='article')}}" role="button">Новая статья</a>
+  <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('new', what='course')}}" role="button">Новый курс</a>
+  </div>
+  <br>
+{% endif %}
+
+{% for a in obj %}
+  <div class="row">
+    <div class="thumbnail">
+      <!--<img src="{{a.headerimage}}">-->
+      <div class="caption">
+        {% if a.is_published == 0 %}
+          <img src="{{request.static_url('training:static/icons/notpublished.png')}}" alt="...">
+        {% endif %}
+        {% if a.is_archived == 1 %}
+          <img src="{{request.static_url('training:static/icons/archived.png')}}" alt="...">
+        {% endif %}
+        <h3><a href="{{request.route_url('showone', what=a.objtype,id=a.id)}}">
+            {{a.header}}
+          </a> 
+          <small>
+            {% if a.objtype == "course" %}
+              {{ a.children|length }} недель
+            {% else %}
+              {{a.lastchanged.strftime('%d.%m.%Y')}}
+            {% endif %}
+            , автор: {{a.author}}
+        </small></h3>
+        {% if a.objtype == "course" %}
+          <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('subscradd', courseid=a.id)}}" role="button">Подписаться</a>
+        {% endif %}
+        {% if authuser is defined and authuser.is_author and authuser.id == a.author_id and not authuser.is_admin %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what=a.objtype, id=a.id)}}" role="button">Изменить</a>
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what=a.objtype, id=a.id)}}" role="button">Удалить</a>
+        {% endif %}
+        {% if authuser is defined and authuser.is_admin %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what=a.objtype, id=a.id)}}" role="button">Изменить</a>
+          {% if a.is_archived %}
+            <a class="btn btn-sm disabled" style="text-decoration:none;" href="{{request.route_url('delete', what=a.objtype, id=a.id)}}" role="button">В архиве</a>
+          {% else %}
+            <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what=a.objtype, id=a.id)}}" role="button">Удалить</a>
+          {% endif %}
+        {% endif %}
+        <p>{{a.preview|safe}} <a href="{{request.route_url('showone', what=a.objtype, id=a.id)}}">Дальше ></a></p>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock content %}

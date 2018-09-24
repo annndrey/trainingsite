@@ -1,0 +1,31 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-9 col-md-offset-0">
+
+      <div class="page-header">
+        <img src="{{res.headerimage}}"  alt="">
+        <h3>{{res.header}}</h3>
+        <small>{{res.lastchanged.strftime('%d.%m.%Y')}}, автор: {{res.author}}</small>
+        {% if authuser and authuser.is_author %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what=res.name, id=res.id)}}" role="button">Изменить</a>
+          {% if authuser.is_admin %}
+            {% if res.is_archived %}
+              <a class="btn btn-sm disabled" style="text-decoration:none;" href="{{request.route_url('delete', what=res.name, id=res.id)}}" role="button">В архиве</a>
+            {% else %}
+              <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what=res.name, id=res.id)}}" role="button">Удалить</a>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-9 col-md-offset-0">
+      {{res.body|safe}}
+    </div>
+  </div>
+      
+
+{% endblock content %}

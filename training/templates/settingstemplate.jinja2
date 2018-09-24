@@ -1,0 +1,99 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Настройки <small>Здесь можно настроить свои подписки, просмотреть детали аккаунта и историю платежей</small></h1>
+</div>
+
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title"><b>{{authuser.name}}</b></h3> 
+  </div>
+  <div class="panel-body">
+     {{ authuser }} <a href="{{ request.route_url('edit', what='user', id=authuser.id)}}" >TODO Изменить</a> <a href="{{ request.route_url('delete', what='user', id=authuser.id)}}" >TODO Удалить</a>
+  </div>
+</div>
+
+{% if authuser.is_author or authuser.is_admin %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Программы <a href="{{ request.route_url('new', what='course')}}">Добавить</a></h3> 
+  </div>
+  <div class="panel-body">
+    {% for course in courses %}
+         <p> {{ course.name }} [{{course.children | length}} {{course.children|length|pluralize(['неделя','недели', 'недель'])}}] <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what='course', id=course.id)}}" role="button">Изменить описание</a>
+           <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('modifycourse', courseid=course.id)}}" role="button">правка элементов</a>
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what='course', id=course.id)}}" role="button">Удалить</a></p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Пользователи</h3>
+  </div>
+  <div class="panel-body">
+    {% for user in users %}
+      <p>{{ user.name }} <a href="{{ request.route_url('edit', what='user', id=user.id)}}" >Изменить</a> <a href="{{ request.route_url('delete', what='user', id=user.id)}}" >Удалить</a> </p>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Подписки</h3>
+  </div>
+  <div class="panel-body">
+    {% for sub in subscr %}
+      <p>
+      {% if not sub.is_cancelled and sub.is_paid %}
+        {% if authuser.is_admin == 1 %}
+          {{sub.uname}}
+        {% endif %}
+        {{ sub }} {{sub.start.strftime('%d/%m/%Y')}} - {{sub.end.strftime('%d/%m/%Y')}} {{sub.duration}} {{sub.duration|pluralize(['неделя','недели', 'недель'])}}
+        {% if sub.is_finished %}
+          <a class="btn btn-sm" style="text-decoration:none;" href="{{request.route_url('payment', action='renew', courseid=sub.course.id, userid=authuser.id, _query={'sid':sub.id})}}" role="button">продлить подписку</a>
+        {% endif %}
+
+        {% if not sub.is_paused %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('subscrpause', action='pause', subscrid=sub.id)}}" role="button">приостановить</a>
+        {% else %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('subscrpause', action='unpause', subscrid=sub.id)}}" role="button">возобновить</a>
+        {% endif %}
+        <a class="btn btn-sm pull-right" style="text-decoration:none;" href="{{request.route_url('subscrpause', action='cancel', subscrid=sub.id)}}" role="button">отменить подписку</a>
+      {% else %}
+        {% if not sub.is_paid %}
+          <span class="label label-default"> неоплачено</span> &nbsp;{{ sub }} {{sub.start.strftime('%d/%m/%Y')}} - {{sub.end.strftime('%d/%m/%Y')}} 
+        {% endif %}
+        {% if sub.is_cancelled %}
+          {{ sub }} <a class="btn btn-sm pull-right" style="text-decoration:none;" href="{{request.route_url('subscrpause', action='restore', subscrid=sub.id)}}" role="button">подписаться снова</a>
+        {% endif %}
+      {% endif %}
+      </p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Счета и платежи</h3>
+  </div>
+  <div class="panel-body">
+    {% for p in payments %}
+       <p> 
+      {% if authuser.is_admin %}
+        {{ p.subscription.uname }}
+      {% endif %}
+     {{ p|safe }} 
+        {% if p.status == "new" %}
+          <a class="btn btn-sm" style="text-decoration:none;" href="{{request.route_url('payment', action='paycheck', userid=authuser.id, courseid=p.subscription.course_id, _query={'sid':p.subscription.id, 'pid':p.id})}}" role="button">оплатить</a>
+          <a class="btn btn-sm" style="text-decoration:none;" href="{{request.route_url('delete', what='payment', id=p.id)}}" role="button">Отменить</a>
+        {% endif %}
+      </p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock content %}

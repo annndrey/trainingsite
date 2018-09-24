@@ -1,0 +1,131 @@
+@import url(//fonts.googleapis.com/css?family=Open+Sans:300,400,600,700);
+@import url(//fonts.googleapis.com/css?family=Lobster:400);
+@import url(https://fonts.googleapis.com/css?family=Bad+Script&subset=latin,cyrillic);
+@import url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,600,700&subset=latin,cyrillic);
+@import url(https://fonts.googleapis.com/css?family=Scada:100,300,400,600,700);
+@import url(https://fonts.googleapis.com/css?family=Hammersmith+One);
+
+#companyname {
+    font-family: 'Hammersmith One', sans-serif; 
+    color:#364f6b;
+
+}
+
+#wktpanel {
+    color:inherit;
+    margin-top:20px;
+}
+
+#rndpanel {
+    color:#364f6b;
+}
+
+a {
+    color:#bd3232;
+    }
+
+body {
+    background-color:#f5f5f5;
+    color:#364f6b;
+    font-family: "Scada", "Open Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.2;
+    text-align:justify;
+}
+
+h1 {
+     font-family: "Bad Script", "Open Sans", Helvetica, Arial, sans-serif;
+     font-weight: 300;
+}
+
+.navbar-brand {
+    text-decoration: none;
+}
+.nav a {
+    padding-top: 30px;
+    text-decoration: none;
+}
+.navbar-brand, .navbar-nav > li > a {
+    color:#f5f5f5;
+}
+
+.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus { 
+    color:#f5f5f5;
+    background-color:#364f6b;
+}
+.icon-bar {
+    background-color:#f5f5f5;
+}
+navbar-brand, .navbar-nav > li > a:hover{
+    color:#364f6b;
+    }
+
+.font-normal {
+  font-weight: 400;
+}
+
+.navbar-nav.navbar-right:last-child {
+    margin-right: 0;
+}
+
+a.disabled {
+  color: gray;
+  pointer-events: none;
+}
+.entry:not(:first-of-type)
+{
+    margin-top: 10px;
+}
+
+.btn-social-icon {
+    margin-right: 5px;
+}
+
+#roundheader {
+    color:#bd3232;
+    }
+
+.navbar-custom, .panel-custom {
+    background-color:#364f6b;
+    }
+
+#footer {
+    background:#364f6b;
+    color:#f5f5f5;
+    }
+#footer a {
+    color:#bd3232;
+    }
+#afterfooter {
+    background:#364f6b;
+    }
+#beforefooter {
+    background:#364f6b;
+    }
+
+.paper {
+    background-color: #f5f5f5;
+    background-image: url('./lined-paper-2.png');
+}
+
+#pgr {
+    background-color: #364f6b;
+    font-size:16pt;
+    color:#f5f5f5;
+}
+
+.label-custom {
+    background:#8ec888;
+    }
+
+.caption img {
+    float: left;
+}
+.caption h3 {
+    position: relative;
+    top: -22px;
+    left: 10px;
+}
+
+.btn-sm {
+    margin-top:10px;
+}

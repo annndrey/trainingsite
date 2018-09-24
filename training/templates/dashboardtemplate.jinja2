@@ -1,0 +1,81 @@
+{% extends "layout.jinja2" %}
+
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Курсы <small>тут отображаются курсы, на которые оформлена подписка</small></h1>
+</div>
+
+<ul class="nav nav-pills nav-justified">
+  {% for sub in subscr %}
+    {% if loop.index == 1 %}
+      <li class="active"><a href="#{{sub.id}}" data-toggle="tab">{{'<span class="label label-default"> неоплачено</span> &nbsp;'|safe if sub.is_paid != 1}}{{sub.course.name}}</a></li>
+    {% else %}
+      <li><a href="#{{sub.id}}" data-toggle="tab">{{'<span class="label label-default"> неоплачено</span> &nbsp;'|safe if sub.is_paid != 1}}{{sub.course.name}}</a></li>
+    {% endif %}
+  {% endfor %}
+  <li><a href="#aaa" data-toggle="tab">вкладка 2</a></li>
+  <li><a href="#bbb" data-toggle="tab">вкладка 3</a></li>
+</ul>
+
+<div class="tab-content ">
+  {% for sub in subscr %}
+    {% if loop.index == 1 %}
+      <div class="tab-pane active" id="{{sub.id}}">
+    {% else %}
+      <div class="tab-pane" id="{{sub.id}}">
+    {% endif %}
+    {% if sub.is_paid == 1 %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-1 pull-right">
+              [FAQ]
+            </div>
+            <div class="col-md-2 pull-right">
+              [Об авторе]
+            </div>
+            <div class="col-md-4 ">
+              [Как использовать программу]
+            </div>
+          </div>
+        </div>
+      </div>
+      {% for week in sub.twolastweeks %}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">{{week.trelemtype}} {{week.childindex}} из {{week.parent.children|length}} | {{week.trweektype}}             <small><a  data-toggle="collapse" href="#weekdescr{{week.id}}" aria-expanded="false" aria-controls="weekdescr{{week.id}}">Описание</a>
+                <div class="collapse" id="weekdescr{{week.id}}">
+                  <div>
+                    {{week.descr}}
+                  </div>
+                </div>
+              </small>
+            </h3>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              {% for wkt in week.children %}
+                <div class="col-md-4">
+                  <h4><img src="{{request.static_url('training:static/icons/')+wkt.weektype+".png"}}" alt="..."> <a href="{{request.route_url('workout', wktid=wkt.id)}}">{{wkt.trelemtype}} {{loop.index}}, {{ wkt.trweektype }}</a> <small>{{wkt.timetotal}}</small></h4>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    </div>
+  {% endfor %}
+      
+    <div class="tab-pane" id="aaa">
+      <h3>ololo</h3>
+    </div>
+    
+    <div class="tab-pane" id="bbb">
+      <h3>trololo</h3>
+    </div>
+
+</div>
+{% endblock content %}

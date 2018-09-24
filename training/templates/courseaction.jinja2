@@ -1,0 +1,171 @@
+{% extends "layout.jinja2" %}
+
+
+{% block content %}
+  <div class="row">
+    {% if obj is defined %}
+      <form role="form" method="post" action="{{ request.route_url('courseaction', courseid=parent.id, args=('edit', obj.id, ordid)) }}">
+    {% else %}
+      <form role="form" method="post" action="{{ request.route_url('courseaction', courseid=parent.id, args=('new')) }}">
+    {% endif %}
+      {% if what == "week" %}
+        <h2>{{actions[act]}} {{objs[what]}} для курса <b>{{parent.name}}</b></h2>
+        <div class="form-group"> 
+          
+          <label for="weektype" class="col-sm-1 control-label">Тип недели</label>
+          
+          <div class="col-sm-2">
+            <select class="form-control" id="weektype" name="weektype">
+              {% if obj is defined %}
+              <option selected>{{obj.weektype}}</option>
+              {% endif %}
+              <option>power</option>
+              <option>endurance</option>
+              <option>fingers</option>
+              <option>projecting</option>
+              <option>test</option>
+              <option>rest</option>
+            </select>
+          </div>
+          
+          <label for="weekdescr" class="col-sm-1 control-label">Описание недели</label>
+
+          <div class="col-sm-8">
+            <textarea class="form-control" rows="3" id="weekdescr" name="weekdescr">{{obj.descr if obj is defined}}</textarea>
+          </div>
+          <label for="customorder" class="col-sm-1 control-label">место в списке</label>
+          <div class="col-sm-2">
+            <input type="text" class="form-control" id="customorder" name="customorder" value="{{ obj.customorder if obj is defined and obj.customorder is not none }}">
+          </div>
+        </div>
+      {% endif %}
+
+    {% if what == "workout" %}
+      <h2>{{actions[act]}} {{objs[what]}} для курса <b>{{parent.parent.parent.name}}, {{parent.trelemtype}} {{ordid}}, {{parent.trweektype}}</b></h2>
+      <div class="form-group">
+        <label for="wkttype" class="col-sm-1 control-label">Тип дня</label>
+        <div class="col-sm-2">
+          <select class="form-control" id="wkttype" name="wkttype">
+            {% if obj is defined %}
+              <option selected>{{obj.weektype}}</option>
+            {% endif %}
+            <option>power</option>
+            <option>endurance</option>
+            <option>fingers</option>
+            <option>projecting</option>
+            <option>test</option>
+            <option>rest</option>
+          </select>
+        </div>
+      </div>
+      
+      <label for="wktdescr" class="col-sm-1 control-label">Описание дня</label>
+      <div class="col-sm-8">
+        <textarea class="form-control" rows="3" id="wktdescr" name="wktdescr">{{ obj.descr if obj is defined }}</textarea>
+      </div>
+      
+      <label for="wkttotaltime" class="col-sm-1 control-label">Суммарное время</label>
+      <div class="col-sm-2">
+        <input type="text" class="form-control" id="wkttotaltime" name="wkttotaltime">{{ obj.totaltime if obj is defined  }}</input>
+      </div>
+      <label for="customorder" class="col-sm-1 control-label">место в списке</label>
+      <div class="col-sm-2">
+        <input type="text" class="form-control" id="customorder" name="customorder" value="{{ obj.customorder if obj is defined and obj.customorder is not none }}">
+      </div>
+
+    {% endif %}
+
+    {% if what == "round" %}
+      <div class="form-group">
+        <h2>{{actions[act]}} {{objs[what]}} для курса <b>{{parent.parent.parent.name}},  {{parent.trelemtype}} {{ordid}}</b></h2>
+        <label for="roundcname" class="col-md-2 control-label">Название группы упражнений</label>
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="roundname" name="roundname" value="{{ obj.name if obj is defined }}"></input>
+        </div>
+        <label for="rounddescr" class="col-md-1 control-label">Описание</label>
+        <div class="col-md-6">
+          <textarea class="form-control" rows="3" id="rounddescr" name="rounddescr">{{ obj.descr if obj is defined }}</textarea>
+        </div>
+        <label for="customorder" class="col-sm-1 control-label">место в списке</label>
+        <div class="col-sm-2">
+          <input type="text" class="form-control" id="customorder" name="customorder" value="{{ obj.customorder if obj is defined and obj.customorder is not none }}">
+        </div>
+
+      </div>
+    {% endif %}
+    
+    {% if what == "excercise" %}
+      <div class="form-group">
+
+        <h2>{{actions[act]}} {{objs[what]}} для курса <b>{{parent.parent.parent.parent.name}},  {{parent.parent.parent.trelemtype}} {{ordid}}, {{parent.name}}</b></h2>
+        <div class="row">
+          <label for="excname" class="col-md-2 control-label">Название упражнения</label>
+          <div class="col-md-3">
+            <input type="text" class="form-control" id="excname" name="excname" value="{{ obj.name if obj is defined }}"></input>
+          </div>
+          <label for="excdescr" class="col-md-2 control-label">Описание упражнения</label>
+          <div class="col-md-5">
+            <textarea class="form-control" rows="3" id="excdescr" name="excdescr" >{{ obj.descr if obj is defined }}</textarea>
+          </div>
+          <label for="onerepis" class="col-md-2 control-label">Один повтор:</label>
+          <div class="col-md-3">
+            <input type="text" class="form-control" id="onerepis" name="onerepis" value="{{ obj.onerepis if obj is defined }}"></input>
+          </div>
+          <label for="numsets" class="col-md-2 control-label">Кол-во подходов</label>
+          <div class="col-md-1">
+            <input type="text" class="form-control" id="numsets" name="numsets" value="{{ obj.numsets if obj is defined }}"></input>
+          </div>
+          <label for="numreps" class="col-md-2 control-label">Кол-во повторов</label>
+          <div class="col-md-1">
+            <input type="text" class="form-control" id="numreps" name="numreps" value="{{ obj.numreps if obj is defined }}"></input>
+          </div>
+        </div>
+        <div class="row">
+          <label for="griptype" class="col-md-2 control-label">Тип хвата</label>
+          <div class="col-md-3">
+            <select class="form-control" id="griptype" name="griptype">
+              {% if obj is defined %}
+                <option selected>{{ obj.griptype }}</option>
+              {% endif %}
+              <option> </option>
+              <option>открытый</option>
+              <option>полузакрытый</option>
+              <option>закрытый</option>
+              <option>пассив</option>
+              <option>щипок</option>
+            </select>
+          </div>
+          <label for="perftime" class="col-md-2 control-label">Время выполнения</label>
+          <div class="col-md-1">
+            <input type="text" class="form-control" id="perftime" name="perftime" value="{{ obj.perftime if obj is defined }}"></input>
+          </div>
+          <label for="resttime" class="col-md-2 control-label">Время отдыха</label>
+          <div class="col-md-1">
+            <input type="text" class="form-control" id="resttime" name="resttime" value="{{ obj.resttime if obj is defined }}"></input>
+          </div>
+          <label for="finalrest" class="col-md-2 control-label">Отдых между упражнениями</label>
+          <div class="col-md-1">
+            <input type="text" class="form-control" id="finalrest" name="finalrest" value="{{ obj.finalrest if obj is defined }}"></input>
+          </div>
+          <label for="customorder" class="col-sm-1 control-label">место в списке</label>
+          <div class="col-sm-2">
+            <input type="text" class="form-control" id="customorder" name="customorder" value="{{ obj.customorder if obj is defined and obj.customorder is not none }}">
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <input type="hidden" id="objtype" name="objtype" value="{{what}}" />
+    {% if obj is defined %}
+      <input type="hidden" id="objid" name="objid" value="{{obj.id}}" />
+    {% endif %}
+    <input type="hidden" id="action" name="action" value="{{act}}" />
+    <input type="hidden" id="ordid" name="ordid" value="{{ordid}}" />
+    <input type="hidden" id="pid" name="pid" value="{{parent.id}}" />
+    <input type="hidden" id="csrf" name="csrf" value="{{request.session.get_csrf_token()}}" />
+    <button type="submit" class="btn btn-default pull-right" id="submit" name="submit" title="Сохранить" >Сохранить</button>
+    {% if not obj is defined %}
+      <button type="submit" class="btn btn-default pull-right" id="submitmore" name="submitmore" title="Сохранить и добавить ещё" >Сохранить и добавить ещё</button>   
+    {% endif %}
+      </form>
+  </div>
+{% endblock content %}

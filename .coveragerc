@@ -1,0 +1,3 @@
+[run]
+source = training
+omit = training/test*

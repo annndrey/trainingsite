@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="{{request.locale_name}}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="программы тренировок по скалолазанию боулдеринг онлайн">
+    <meta name="author" content="annndrey@manatee.trololo.info">
+    <link rel="shortcut icon" href="{{request.static_url('training:static/walnut.png')}}">
+    <title>like a rock!</title>
+
+    <link rel="stylesheet" href="{{request.static_url('training:static/css/bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{request.static_url('training:static/css/bootstrap-theme.min.css')}}">
+    <link href="{{request.static_url('training:static/bootstrap-social.css')}}" rel="stylesheet">
+    <link rel="stylesheet" href="{{request.static_url('training:static/css/bootstrap-treeview.css')}}">
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="{{request.static_url('training:static/js/bootstrap.min.js')}}"></script>
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+    <script src="{{request.static_url('training:static/js/bootstrap-treeview.js')}}"></script>
+
+    <!--<script type="text/javascript" data-cfasync="false" src="//dsms0mj1bbhn4.cloudfront.net/assets/pub/shareaholic.js" data-shr-siteid="99262dd2e72eaaa441a3fbcd7bc8aec1" async="async"></script>-->
+    <link href="{{request.static_url('training:static/theme.css')}}" rel="stylesheet">
+  </head>
+
+  <body>
+    <nav class="navbar navbar-custom">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Разделы</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/"><img style="min-width:80px; max-width:150px;" alt="Brand" src="{{request.static_url('training:static/logo1.png')}}"></a><a class="navbar-brand" href="/"><span></span></a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">Главная </a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Программы<span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="{{request.route_url('showall', what='courses')}}">Все программы</a></li>
+              {% for c in courses %}
+                <li><a href="{{request.route_url('showone', what=c.objtype, id=c.id)}}"> {{c.header}}</a></li>
+              {% endfor %}
+              <li role="separator" class="divider"></li>
+              <li class="dropdown-header">Дополнительно:</li>
+              <li><a class="disabled" href="#">Питание</a></li>
+              <li><a class="disabled" href="#">Персональные тренировки</a></li>
+            </ul>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="{{request.route_url('showall', what='articles')}}">Статьи</a></li>
+          <li><a href="/about">О нас</a></li>
+          {% if authuser is defined %}
+            <li><a href="/dashboard">Тренировки</a></li>
+          <li><a href="/settings">[{{authuser.name}}] Настройки</a></li>
+          <li><a href="/logout">  Выйти&nbsp;&nbsp;&nbsp;</a></li>
+        {% else %}
+          <li><a href="/login">  Войти&nbsp;&nbsp;&nbsp;</a></li>
+        {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+        {% for msg in request.session.pop_flash() %}
+            <div class="alert alert-{{msg['class']}}">
+	      {{msg['text']}}
+            </div>
+        {% endfor %}
+
+      {% block content %}
+
+        <p>No content</p>
+      {% endblock content %}
+    </div>
+    <div class="container-fluid" id="beforefooter">
+      <div class="col-xs-12" style="height:23px;"></div>
+    </div>
+
+    <div class="container-fluid" id="footer">
+      <div class="copyright">
+        <!--<hr style="width: 100%; color: gray; height: 1px; background-color:gray;" />-->
+        <div class="row">
+          <div class="col-md-12 col-md-offset-2">
+            <div class="col-md-3">
+              Контакты:
+              <div class="row">
+                эл. почта: <a href="mailto:{{email}}">{{email}}</a> 
+              </div>
+              <div class="row">
+                телефон <a href="tel:{{phone}}">  {{phone}}</a>
+              </div>
+              <div class="row">
+                WhatsApp <a href="https://api.whatsapp.com/send?phone={{whatsappphone}}">  {{phone}}</a>
+              </div>
+            </div>
+            <div class="col-md-4">Copyright &copy; by Manatee Studio, <script>document.write(new Date().getFullYear())</script></div>
+            <div class="col-md-4"><a href="https://icons8.com">Icons by Icons8</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid" id="afterfooter">
+      <div class="col-xs-12" style="height:50px;"></div>
+    </div>
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://use.fontawesome.com/8f72f99d09.js"></script>
+  </body>
+</html>

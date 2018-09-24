@@ -1,0 +1,75 @@
+{% extends "layout.jinja2" %}
+
+
+{% block content %}
+  <div class="inner"> 
+    <div class="row">
+      <h2>{{action}} {{what}} для курса <b>{{parent.name}}</b></h2>
+      <form role="form" method="post" action="{{ request.route_url('courseaction', courseid=parent.id, args=('new')) }}">
+        <div class="form-group"> 
+          <label for="weektype" class="col-sm-1 control-label">Тип недели</label>
+          <select class="form-control" id="weektype">
+            <option>power</option>
+            <option>endurance</option>
+            <option>fingers</option>
+            <option>projecting</option>
+            <option>test</option>
+            <option>rest</option>
+          </select>
+       
+          <label for="weekdescr" class="col-sm-1 control-label">Описание недели</label>
+          <textarea class="form-control" rows="3" id="weekdescr"></textarea>
+        </div>
+    </div>
+    {% if what == "дня" %}
+      <h2>{{action}} {{what}} для курса <b>{{parent.name}}</b></h2>
+      <label for="wkttype" class="col-sm-1 control-label">Тип дня</label>
+      <select class="form-control" id="wkttype">
+        <option>power</option>
+        <option>endurance</option>
+        <option>fingers</option>
+        <option>projecting</option>
+        <option>test</option>
+        <option>rest</option>
+      </select>
+      <label for="wktdescr" class="col-sm-1 control-label">Описание дня</label>
+      <textarea class="form-control" rows="3" id="wktdescr"></textarea>
+      <label for="wkttotaltime" class="col-sm-1 control-label">Суммарное время</label>
+      <input type="text" class="form-control" id="wkttotaltime"></input>
+    {% endif %}
+    {% if what == "группы" %}
+      <h2>{{action}} {{what}} для курса <b>{{parent.name}}</b></h2>
+      <label for="roundcname" class="col-sm-1 control-label">Название группы упражнений</label>
+      <input type="text" class="form-control" id="roundname"></input>
+      <label for="rounddescr" class="col-sm-1 control-label">Описание</label>
+      <textarea class="form-control" rows="3" id="rounddescr"></textarea>
+    {% endif %}
+    {% if what == "упражнения" %}
+      <h2>{{action}} {{what}} для курса <b>{{parent.name}}</b></h2>
+      <label for="excname" class="col-sm-1 control-label">Название упражнения</label>
+      <input type="text" class="form-control" id="excname"></input>
+      <label for="excdescr" class="col-sm-1 control-label">Описание упражнения</label>
+      <textarea class="form-control" rows="3" id="excdescr"></textarea>
+      <label for="onerepis" class="col-sm-2 control-label">Один повтор это</label>
+      <input type="text" class="form-control" id="onerepis"></input>
+      <label for="numsets" class="col-sm-2 control-label">Кол-во подходов</label>
+      <input type="text" class="form-control" id="numsets"></input>
+      <label for="numreps" class="col-sm-2 control-label">Кол-во повторов</label>
+      <input type="text" class="form-control" id="numreps"></input>
+      <label for="griptype" class="col-sm-1 control-label">Тип хвата</label>
+      <select class="form-control" id="wkttype">
+        <option>открытый</option>
+        <option>полузакрытый</option>
+        <option>закрытый</option>
+        <option>пассив</option>
+        <option>щипок</option>
+      </select>
+      <label for="perftime" class="col-sm-2 control-label">Время выполнения</label>
+      <input type="text" class="form-control" id="perftime"></input>
+      <label for="resttime" class="col-sm-2 control-label">Время отдыха</label>
+      <input type="text" class="form-control" id="resttime"></input>
+    {% endif %}
+    <input type="hidden" id="csrf" name="csrf" value="{{request.session.get_csrf_token()}}" />
+    <button type="submit" class="btn btn-default pull-right" id="submit" name="submit" title="Сохранить" >Сохранить</button>   
+  </form>
+{% endblock content %}

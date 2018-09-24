@@ -1,0 +1,568 @@
+# -*- coding: utf-8
+
+import hashlib
+import smtplib
+import datetime
+from functools import wraps
+import email.mime.multipart
+from email.mime.text import MIMEText
+from pyramid.response import Response
+from pyramid.view import view_config
+from pyramid.security import (
+    authenticated_userid,
+    forget,
+    remember
+)
+
+from pyramid.events import subscriber
+from pyramid.events import BeforeRender
+
+from pyramid.httpexceptions import (
+    HTTPForbidden,
+    HTTPFound,
+    HTTPNotFound,
+    HTTPSeeOther
+)
+
+from pyramid.i18n import (
+    TranslationStringFactory,
+    get_localizer,
+    get_locale_name
+)
+
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.sql import and_, or_, not_
+
+from ..models import User, CourseElement, Media, Subscription, Payment, Article
+
+#auth_decorator
+#def login_required(func):
+#    @wraps(func)
+#    def new_func(request):
+#        if(request.cookies.get('user')): 
+#            return func(request)
+#
+#        else:
+#            return Response('not authirised')
+#    return new_func
+
+
+
+@subscriber(BeforeRender)
+def add_global(event):
+    # заполняем глобальные переменные, чтобы 
+    # не передавать их в каждый шаблон
+    request = event.get('request')
+    cfg = request.registry.settings
+    mailto = cfg.get('email')
+    phone = cfg.get('tel')
+    whatsappphone = cfg.get('whatsapp')
+    event['phone'] = phone
+    event['email'] = mailto
+    event['whatsappphone'] = whatsappphone
+    courses = request.dbsession.query(CourseElement).filter(CourseElement.parent_id == None).filter(CourseElement.is_published == 1).filter(not_(CourseElement.is_archived)).order_by(CourseElement.name).all()
+    authors = request.dbsession.query(User).filter(or_(User.is_author == 1, User.is_admin==1)).order_by(User.is_admin.desc()).all()
+    event['authors'] = authors
+    event['courses'] = courses
+    if authenticated_userid(request):
+        user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+        event['authuser'] = user
+
+
+@view_config(route_name='modifycourse', renderer='../templates/coursemodifytemplate.jinja2')
+def modify(request):
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    if not user.is_author:
+        return HTTPSeeOther(location=request.route_url('home'))
+    tpl = {}
+    cid = int(request.matchdict['courseid'])
+    tomodify = request.dbsession.query(CourseElement).filter(CourseElement.id==cid).first()
+    tpl.update({'course':tomodify})
+    return tpl
+
+@view_config(route_name='courseaction', renderer='../templates/courseaction.jinja2')
+def courseaction(request):
+    """
+    add/delete/modify
+    ?week, wkt, exc
+    """
+
+    actions = {'new': u"Добавление", 'edit': u"Правка", 'delete': u"Удаление"}
+    objs = {'week':u'недели', 'wkt':u'дня', 'rnd':u'группы', 'exc':u'упражнения'}
+
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    if request.POST:
+        # обрабатываем форму
+        # смотрим action
+        # делаем
+        print "*POST"*80
+        print request.POST
+        return {}
+
+    else:
+        parentid = request.matchdict['courseid']
+        action = request.matchdict['args'][0]
+        what = request.matchdict['args'][1]
+
+        if action == 'new':
+            # show empty form
+            parentcourse = request.dbsession.query(CourseElement).filter(CourseElement.id==parentid).first()
+            tpl = {'parent': parentcourse, "action":actions[action], "what":objs[what]}
+            return tpl
+
+        elif action == 'edit':
+            # get respective obj and pass it to the template
+            pass
+        elif action == 'delete':
+            # get respective obj and delete it
+            # return to 
+            pass
+        else:
+            raise HTTPNotFound()
+
+@view_config(route_name='showone', renderer='../templates/articletemplate.jinja2')
+def showoneview(request):
+    tpl = {}
+    objid = request.matchdict['id']
+    what = request.matchdict['what']
+
+    if what == 'article':
+        q = request.dbsession.query(Article)
+        obj = Article
+    if what == 'course':
+        q = request.dbsession.query(CourseElement).filter(CourseElement.parent_id == None)
+        obj = CourseElement
+    
+    if not authenticated_userid(request):
+        res = q.filter(obj.id==objid).filter(obj.is_published==1).filter(not_(obj.is_archived)).first()
+    else:
+        user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+        res = q.filter(obj.id==objid).filter(obj.is_published==1).filter(not_(obj.is_archived)).first()
+
+        if user.is_author:
+            res = q.filter(obj.id==objid).filter(not_(obj.is_archived)).first()
+        if user.is_admin:
+            res = q.filter(obj.id==objid).first()
+
+    if res is None:
+        raise HTTPNotFound()
+
+    tpl.update({'obj':res})
+    
+
+    return tpl
+
+
+@view_config(route_name='showall', renderer='../templates/articlestemplate.jinja2')
+def showallview(request):
+    tpl = {}
+    what = request.matchdict['what']
+    if what == 'articles':
+        obj = Article
+        q = request.dbsession.query(Article)
+
+    if what == 'courses':
+        obj = CourseElement
+        q = request.dbsession.query(CourseElement).filter(CourseElement.parent_id == None)
+
+    if not authenticated_userid(request):
+        res = q.filter(obj.is_published==1).filter(not_(obj.is_archived))
+    else:
+        user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+        res = q.filter(obj.is_published==1).filter(not_(obj.is_archived))
+        if user.is_author:
+            res = q.filter(not_(obj.is_archived))
+        if user.is_admin:
+            res = q
+
+    if what == 'courses':
+        res = res.order_by(obj.name).all()
+
+    if what == 'articles':
+        res = res.all()
+
+    tpl.update({'obj':res})
+    return tpl
+
+
+@view_config(route_name='new', renderer='../templates/newarticlestemplate.jinja2')
+def newview(request):
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    if not user.is_author:
+        return HTTPSeeOther(location=request.route_url('articles'))
+    
+    what = request.matchdict['what']
+    tpl = {'what':what}
+
+    if request.POST:
+        if what == 'article':
+            newobj = Article()
+        elif what == 'course':
+            newobj = CourseElement()
+            
+        csrf = request.POST.get('csrf', '')
+        if csrf == request.session.get_csrf_token():
+            newobj.author_id = user.id
+            newobj.headerimage = request.POST.get('headimg')
+          
+            if user.is_admin:
+                if 'published' in request.POST.keys():
+                    newobj.is_published = 1
+                else:
+                    newobj.is_published = 0
+                if 'archived' in request.POST.keys():
+                    newobj.is_archived = 1
+                else:
+                    newobj.is_archived = 0
+
+            if what == 'course':
+                newobj.name = request.POST.get('head')
+                newobj.elemtype = what
+            elif what == 'article':
+                 newobj.header = request.POST.get('head')
+
+            newobj.preview = request.POST.get('preview')
+            if what == 'article':
+                newobj.body = request.POST.get('newpost')
+            request.dbsession.add(newobj)
+            request.session.flash({
+                    'class' : 'success',
+                    'text'  : u'Данные сохранены'
+                    })
+            return HTTPSeeOther(location=request.route_url('showall', what=what+'s'))
+        else:
+            request.session.flash({
+                    'class' : 'warning',
+                    'text'  : u'Что-то пошло не так, данные не сохранились'
+                    })
+            
+            return HTTPSeeOther(location=request.route_url('new', what=what))
+    
+    return tpl
+
+@view_config(route_name='edit', renderer='../templates/newarticlestemplate.jinja2')
+def editview(request):
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    what = request.matchdict['what']
+    objid = request.matchdict['id']
+
+    if not user.is_author:
+        return HTTPSeeOther(location=request.route_url('showone', what=what, id=objid))
+
+    tpl = {}
+    if what == 'article':
+        obj = Article
+    if what == 'course':
+        obj = CourseElement
+
+    res = request.dbsession.query(obj).filter(obj.id == objid).first()        
+    ## TODO добавить обработку правки и удаления юзеров
+    if request.POST:
+        print request.POST
+        
+        csrf = request.POST.get('csrf', '')
+        if csrf == request.session.get_csrf_token():
+            if res.author_id == user.id:
+                res.author_id = user.id
+            res.headerimage = request.POST.get('headimg')
+            if what == 'course':
+                res.name = request.POST.get('head')
+                res.elemtype = what
+            else:
+                res.header = request.POST.get('head')
+
+            res.preview = request.POST.get('preview')
+
+            if user.is_admin:
+                if 'published' in request.POST.keys():
+                    res.is_published = 1
+                else:
+                    res.is_published = 0
+                if 'archived' in request.POST.keys():
+                    res.is_archived = 1
+                else:
+                    res.is_archived = 0
+            if request.POST.has_key('newpost'):
+                res.body = request.POST.get('newpost')
+            request.dbsession.add(res)
+            request.session.flash({
+                    'class' : 'success',
+                    'text'  : u'Изменения сохранены'
+                    })
+            return HTTPSeeOther(location=request.route_url('showone', what=what, id=objid))
+        else:
+            request.session.flash({
+                    'class' : 'warning',
+                    'text'  : u'Что-то пошло не так, не сохранено'
+                    })
+            
+            return HTTPSeeOther(location=request.route_url('edit', what=what, id=objid))
+
+    tpl.update({'obj':res})
+    return tpl
+
+@view_config(route_name='delete')
+def deleteview(request):
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    if not user.is_author:
+        return HTTPSeeOther(location=request.route_url('articles'))
+
+    what = request.matchdict['what']
+    objid = int(request.matchdict['id'])
+    if what == 'article':
+        obj = Article
+    if what == 'course':
+        obj = CourseElement
+
+    todelete = request.dbsession.query(obj).filter(obj.id == objid).first()
+    todelete.is_archived = 1
+    todelete.is_published = 0
+    request.dbsession.add(todelete)
+    request.session.flash({
+            'class' : 'success',
+            'text'  : u'Данные отправлены в архив'
+            })
+    
+    return HTTPSeeOther(location=request.route_url('showall', what=what+'s'))
+
+
+@view_config(route_name='logout')
+def logoutview(request):
+    if authenticated_userid(request):
+        headers = forget(request)
+        return HTTPSeeOther(location=request.route_url('home'), headers=headers)
+    return HTTPSeeOther(location=request.route_url('login'))
+
+@view_config(route_name='about', renderer='../templates/abouttemplate.jinja2')
+def aboutview(request):
+    cfg = request.registry.settings
+    tpl = {}
+    return tpl        
+    
+@view_config(route_name='login', renderer='../templates/logintemplate.jinja2')
+def loginview(request):
+    cfg = request.registry.settings
+    salt = cfg.get('salt')
+    tpl = {}
+    if authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    if 'fname' in request.POST:
+        fname = request.POST.get('fname', '')
+        csrf = request.POST.get('csrf', '')
+        login = request.POST.get('login', '')
+        password = request.POST.get('password', '')
+
+        if (csrf == request.session.get_csrf_token()) and login:
+            if fname == 'login':
+                q = request.dbsession.query(User).filter(User.login == login)
+                if q.count() == 0:
+                    request.session.flash({
+                            'class' : 'info',
+                            'text'  : u'Попробуйте зарегистрироваться и попробовать войти снова'
+                            })
+                    return HTTPSeeOther(location=request.route_url('login'))
+
+                for user in q:
+                    formpassword = hashlib.md5(salt+password.encode('utf-8')).hexdigest()
+
+                    if user.password == formpassword:
+                        headers = remember(request, login)
+                        request.response.headerlist.extend(headers)
+                        return HTTPFound(request.route_url('home'), headers=headers)
+
+                    request.session.flash({
+                            'class' : 'warning',
+                            'text'  : u'Неправильный пароль, простите'
+                            })
+                    return HTTPSeeOther(location=request.route_url('login'))
+
+            elif fname == 'signup':
+                # проверяем не занят ли логин
+                q = request.dbsession.query(User).filter(User.login == login)
+                if q.count() > 0:
+                    request.session.flash({
+                            'class' : 'info',
+                            'text'  : u'Похоже, что такой адрес уже использован для регистрации. Вы точно еще не регистрировались?'
+                            })
+                    return HTTPSeeOther(location=request.route_url('login'))
+                else:
+                    firstname = request.POST.get('firstname', '')
+                    lastname = request.POST.get('lastname', '')
+                    uname = "{0} {1}".format(firstname.encode('utf-8'), lastname.encode('utf-8')).decode('utf-8')
+                    newuser = User()
+                    newuser.login = login
+                    newuser.name = uname
+                    newuser.password = hashlib.md5(salt+password).hexdigest()
+                    request.dbsession.add(newuser)
+                    request.session.flash({
+                            'class' : 'success',
+                            'text'  : u'Данные сохранены'
+                            })
+
+                    return HTTPSeeOther(location=request.route_url('home'))
+                    
+    return tpl
+    #else return login form 
+
+@view_config(route_name='home', renderer='../templates/hometemplate.jinja2')
+def mainview(request):
+    tpl = {}
+    return tpl
+
+@view_config(route_name='settings', renderer='../templates/settingstemplate.jinja2')
+def settingsview(request):
+    tpl = {}
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    tpl.update({'authuser':user})
+    
+    #for admins
+    if user.is_admin:
+        users = request.dbsession.query(User).all()
+        courses = request.dbsession.query(CourseElement).all()
+        subscr = request.dbsession.query(Subscription).all()
+        payments = request.dbsession.query(Payment).all()
+        tpl.update({'users':users, 'courses':courses, 'subscr':subscr})
+    
+    # for authors
+    elif user.is_author:
+        #get author's courses
+        courses = request.dbsession.query(CourseElement).filter(CourseElement.author_id == user.id).all()
+        #get all subscriptions for author's courses
+        subscr = request.dbsession.query(Subscription).join(CourseElement).filter(CourseElement.author_id==user.id).all()
+        # get all user payments for author's courses
+        payments = request.dbsession.query(Payment).join(Subscription).join(CourseElement).filter(CourseElement.author_id==user.id).all()
+        # get all users, subscribed to author's courses
+        users = request.dbsession.query(User).join(Subscription).filter(Subscription.cname.has(CourseElement.author_id==user.id)).all()
+        tpl.update({'courses':courses, 'users':users, 'payments':payments, 'subscr':subscr})
+
+    else:
+        # for clients
+        subscr = request.dbsession.query(Subscription).filter(Subscription.user == user.id).all()
+        payments = request.dbsession.query(Payment).filter(Payment.user_id == user.id).all()
+        tpl.update({'subscr':subscr, 'payments':payments})
+
+    return tpl
+
+@view_config(route_name='dashboard', renderer='../templates/dashboardtemplate.jinja2')
+def dashboardview(request):
+    tpl = {}
+    if not authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+    user = request.dbsession.query(User).filter(User.login == authenticated_userid(request)).first()
+    tpl.update({'authuser':user})
+    subscr = request.dbsession.query(Subscription).filter(Subscription.user == user.id).all()
+    tpl.update({'subscr':subscr})
+
+    return tpl
+
+@view_config(route_name='resetpassword', renderer='../templates/resetpasswordtemplate.jinja2')
+def resetpasswordview(request):
+    tpl = {}
+
+    if authenticated_userid(request):
+        return HTTPSeeOther(location=request.route_url('home'))
+    if request.POST:
+        # третий шаг, сохраняем новый пароль и перезаписываем last_changed
+        # if POST, validate params, reset password and redirect to the login page
+        login = request.POST.get('login')
+        token = request.POST.get('token')
+        newpass = request.POST.get('password')
+        csrf = request.POST.get('csrf')
+        user = request.dbsession.query(User).filter(User.login == login).first()
+        dbtoken  = hashlib.md5(user.password+str(user.lastchanged)).hexdigest()
+        if token != dbtoken:
+            request.session.flash({
+                    'class' : 'info',
+                    'text'  : u'Ваша ссылка устарела, попробуйте еще раз восстановить пароль'
+                    })
+            return HTTPSeeOther(location=request.route_url('login'))
+        cfg = request.registry.settings
+        salt = cfg.get('salt')
+        user.password = hashlib.md5(salt+newpass).hexdigest()
+        user.lastchanged = datetime.datetime.utcnow()
+        request.dbsession.add(user)
+        request.session.flash({
+                'class' : 'success',
+                'text'  : u'Новый пароль сохранен'
+                })
+        
+        return HTTPSeeOther(location=request.route_url('login'))
+
+        #do stuff
+        #redirect to login
+
+    elif 'token' in request.GET.keys():
+        #второй шаг, приходим по ссылке из email
+        # и заполняем новый пароль
+        login = request.GET.get('login')
+        token = request.GET.get('token')
+        # проверка токена
+        # !
+        user = request.dbsession.query(User).filter(User.login == login).first()
+        dbtoken  = hashlib.md5(user.password+str(user.lastchanged)).hexdigest()
+        if token != dbtoken:
+            request.session.flash({
+                    'class' : 'info',
+                    'text'  : u'Ваша ссылка устарела, попробуйте еще раз восстановить пароль'
+                    })
+            return HTTPSeeOther(location=request.route_url('login'))
+
+        # return new password form
+        # with hidden params
+        tpl.update({'login':user.login,
+                    'token':token
+                    })
+        return tpl
+    else:
+        #первый шаг, создаем токен
+        to = request.GET.get('login')
+        fr = 'noreply@manatee.trololo.info'
+        replyto = 'a@manatee.trololo.info'
+        msg = email.mime.multipart.MIMEMultipart()
+        msg['from']=fr
+        msg.add_header('reply-to', replyto)
+        msg['to']=to
+        msg['subject'] = "Сброс пароля на MakeMeStrong.ru"
+        message = """Кто-то воспользовался формой сброса пароля, указав ваш эл. адрес, {0}
+Если это были не вы, просто проигнорируйте это сообщение. 
+
+Для сброса пароля пройдите по ссылке: {1}
+
+С уважением, команда MakeMeStrong.
+    """
+        user = request.dbsession.query(User).filter(User.login == to.encode('utf-8')).first()
+        if user is not None:
+            token = hashlib.md5(user.password+str(user.lastchanged)).hexdigest()
+            message = message.format(user.login, request.route_url('resetpassword', _query={'login':user.login, 'token':token}))
+            msgtext = MIMEText(message, 'plain')
+            msg.attach(msgtext)
+            serv = smtplib.SMTP('localhost')
+            serv.sendmail(fr, to, msg.as_string())
+            serv.quit()
+        else:
+            request.session.flash({
+                    'class' : 'info',
+                    'text'  : u'Похоже, что такого адреса у нас нет, попробуйте сначала зарегистрироваться'
+                    })
+            return HTTPSeeOther(location=request.route_url('login'))
+
+    
+    return HTTPSeeOther(location=request.route_url('login'))
+    #return tpl

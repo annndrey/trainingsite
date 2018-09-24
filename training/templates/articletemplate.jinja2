@@ -1,0 +1,49 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-9 col-md-offset-0">
+
+      <div class="page-header">
+        <img src="{{obj.headerimage}}"  alt="">
+        <h3>{{obj.header}}
+        <small>
+          {% if obj.objtype == "course" %}
+            {{ obj.children|length }} недель
+          {% else %}
+            {{obj.lastchanged.strftime('%d.%m.%Y')}}
+          {% endif %}
+          , автор: {{obj.author}}
+        </small></h3>
+        {% if authuser and authuser.is_author and obj.author_id == authuser.id %}
+          <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('edit', what=obj.objtype, id=obj.id)}}" role="button">Править</a>
+          {% if obj.objtype=='course' %}
+            <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('modifycourse', courseid=obj.id)}}" role="button">Добавить упражнения</a>
+          {% endif %}
+          {% if authuser.is_admin %}
+            {% if obj.is_archived %}
+              <a class="btn btn-sm disabled" style="text-decoration:none;" href="{{request.route_url('delete', what=obj.objtype, id=obj.id)}}" role="button">В архиве</a>
+            {% else %}
+              <a class="btn btn-sm " style="text-decoration:none;" href="{{request.route_url('delete', what=obj.objtype, id=obj.id)}}" role="button">Удалить</a>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% if obj.objtype == 'course' %}
+    <div class="row">
+      <div class="col-md-9 col-md-offset-0">
+        {{obj.preview|safe}} <a class="btn btn-default" style="text-decoration:none;" href="{{request.route_url('subscradd', courseid=obj.id)}}" role="button">Подписаться</a>
+      </div>
+    </div>
+    
+  {% elif obj.objtype == 'article' %}
+    <div class="row">
+      <div class="col-md-9 col-md-offset-0">
+        {{obj.body|safe}}
+      </div>
+    </div>
+  {% endif %}
+  <div class="shareaholic-canvas" data-app="share_buttons" data-app-id="27452120"></div>      
+{% endblock content %}

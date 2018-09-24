@@ -1,0 +1,79 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+  <!--<script type="text/javascript">
+    $(document).ready(function () {
+    var wktdata = {{generatetree(request, course)|safe}};
+    $('#tree').treeview({data: wktdata});
+    });
+  </script>
+
+  <div class="row">
+    <div id="tree"></div>
+  </div>
+-->
+
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Изменение курса <b>{{course.name}}</b></h2>    <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('new', 'week')) }}" role="button">Добавить неделю</a>
+    </div>
+  </div>
+  
+  
+  <div class="row">
+    {% for week in course.children %}
+      <div class="col-md-3">
+        <h4>{{week.trelemtype}} {{loop.index}}, {{ week.trweektype|upper }}</h4>
+      </div>
+      <div class="col-md-6">
+        <a class="btn btn-default btn-sm btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('edit', 'week', week.id, loop.index)) }}" role="button">Править</a> 
+        <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('delete', 'week', week.id, loop.index)) }}" role="button">Удалить</a>
+        <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('new', 'workout', week.id, loop.index)) }}" role="button">Добавить день</a>
+      </div>
+      <div class="col-md-12">
+        
+        {{week.descr}}
+      </div>
+      {% for wkt in week.children %}
+        <div class="col-md-3 col-md-offset-1">
+          <h4>{{wkt.trelemtype}} {{loop.index}}, {{ wkt.trweektype|upper }}</h4>
+        </div>
+        <div class="col-md-4">
+          <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('edit', 'workout', wkt.id, loop.index)) }}" role="button">Править</a> 
+          <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('delete', 'workout', wkt.id, loop.index)) }}" role="button">Удалить</a>
+          <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('new', 'round', wkt.id, loop.index)) }}" role="button">Добавить группу</a>
+        </div>
+        <div class="col-md-10 col-md-offset-1">
+          {{wkt.descr}}
+        </div>
+        {% for rnd in wkt.children %}
+          <div class="col-md-4 col-md-offset-2">
+            <h4>Раунд {{loop.index}}, {{rnd.name}} </h4>
+          </div>
+          <div class="col-md-5">
+            <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('edit', 'round', rnd.id, loop.index)) }}" role="button">Править</a> 
+            <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('delete', 'round', rnd.id, loop.index)) }}" role="button">Удалить</a>
+            <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('new', 'excercise', rnd.id, loop.index)) }}" role="button">Добавить упражнение</a>
+          </div>
+          <div class="col-md-10 col-md-offset-2">
+            {{rnd.descr}}
+          </div>
+          {% for exc in rnd.children %}
+            <div class="col-md-5 col-md-offset-3">
+              <h4>Упр {{loop.index}}, {{exc.name}} </h4>
+            </div>
+            <div class="col-md-4">
+              <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('edit', 'excercise', exc.id, loop.index)) }}" role="button">Править</a> 
+              <a class="btn btn-default btn-sm" style="text-decoration:none;" href="{{ request.route_url('courseaction', courseid=course.id, args=('delete', 'excercise', exc.id, loop.index)) }}" role="button">Удалить</a>
+            </div>
+            <div class="col-md-10 col-md-offset-3">
+              {{exc.descr}}
+            </div>
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+  
+{% endblock content %}
